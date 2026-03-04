@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wake-on-LAN</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #eee;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: #888;
+            font-size: 1rem;
+        }
+
+        .add-machine-form {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .form-title {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: #ccc;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            flex: 1;
+        }
+
+        @media (max-width: 600px) {
+            .form-row {
+                flex-direction: column;
+            }
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: #999;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+
+        input::placeholder {
+            color: #666;
+        }
+
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-wake {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            padding: 10px 20px;
+            font-size: 0.9rem;
+        }
+
+        .btn-wake:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(56, 239, 125, 0.4);
+        }
+
+        .btn-wake:active {
+            transform: translateY(0);
+        }
+
+        .btn-delete {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ff6b6b;
+            padding: 10px 20px;
+            font-size: 0.9rem;
+        }
+
+        .btn-delete:hover {
+            background: rgba(255, 107, 107, 0.2);
+        }
+
+        .machines-list {
+            margin-top: 20px;
+        }
+
+        .list-title {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: #ccc;
+        }
+
+        .machine-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .machine-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .machine-info {
+            flex: 1;
+        }
+
+        .machine-alias {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #fff;
+        }
+
+        .machine-mac {
+            font-size: 0.9rem;
+            color: #888;
+            font-family: 'Monaco', 'Consolas', monospace;
+        }
+
+        .machine-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 16px 24px;
+            border-radius: 10px;
+            color: white;
+            font-weight: 500;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            max-width: 350px;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .toast-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+
+        .toast-error {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .btn-loading {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Wake-on-LAN</h1>
+            <p class="subtitle">Wake up machines on your network</p>
+        </header>
+
+        <div class="add-machine-form">
+            <h2 class="form-title">Add New Machine</h2>
+            <form id="addMachineForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="macAddress">MAC Address</label>
+                        <input
+                            type="text"
+                            id="macAddress"
+                            placeholder="AA:BB:CC:DD:EE:FF"
+                            required
+                            autocomplete="off"
+                        >
+                    </div>
+                    <div class="form-group">
+                        <label for="alias">Alias / Hostname</label>
+                        <input
+                            type="text"
+                            id="alias"
+                            placeholder="My PC, Server, etc."
+                            required
+                            autocomplete="off"
+                        >
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <span class="btn-text">Add Machine & Send WOL</span>
+                </button>
+            </form>
+        </div>
+
+        <div class="machines-list">
+            <h2 class="list-title">Saved Machines</h2>
+            <div id="machinesList"></div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        const API_BASE = '/api';
+
+        // DOM elements
+        const form = document.getElementById('addMachineForm');
+        const macInput = document.getElementById('macAddress');
+        const aliasInput = document.getElementById('alias');
+        const machinesList = document.getElementById('machinesList');
+        const toast = document.getElementById('toast');
+
+        // Format MAC address as user types
+        macInput.addEventListener('input', (e) => {
+            let value = e.target.value.toUpperCase().replace(/[^A-F0-9]/g, '');
+            if (value.length > 12) value = value.slice(0, 12);
+
+            // Add colons
+            if (value.length > 2) {
+                value = value.match(/.{1,2}/g).join(':');
+            }
+            e.target.value = value;
+        });
+
+        // Add machine form submission
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const macAddress = macInput.value.trim();
+            const alias = aliasInput.value.trim();
+            const submitBtn = form.querySelector('button[type="submit"]');
+
+            if (!macAddress || !alias) return;
+
+            // Show loading state
+            submitBtn.classList.add('btn-loading');
+            submitBtn.innerHTML = '<span class="loading"></span>';
+
+            try {
+                const response = await fetch(`${API_BASE}/machines`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mac_address: macAddress, alias })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    showToast(data.message, 'success');
+                    form.reset();
+                    await loadMachines();
+                } else {
+                    showToast(data.message || 'Failed to add machine', 'error');
+                }
+            } catch (error) {
+                showToast('Network error. Please try again.', 'error');
+            } finally {
+                submitBtn.classList.remove('btn-loading');
+                submitBtn.innerHTML = '<span class="btn-text">Add Machine & Send WOL</span>';
+            }
+        });
+
+        // Load all machines
+        async function loadMachines() {
+            try {
+                const response = await fetch(`${API_BASE}/machines`);
+                const machines = await response.json();
+                renderMachines(machines);
+            } catch (error) {
+                console.error('Failed to load machines:', error);
+            }
+        }
+
+        // Render machines list
+        function renderMachines(machines) {
+            if (machines.length === 0) {
+                machinesList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">💤</div>
+                        <p>No machines saved yet. Add one above!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            machinesList.innerHTML = machines.map(machine => `
+                <div class="machine-card" data-id="${machine.id}">
+                    <div class="machine-info">
+                        <div class="machine-alias">${escapeHtml(machine.alias)}</div>
+                        <div class="machine-mac">${machine.mac_address}</div>
+                    </div>
+                    <div class="machine-actions">
+                        <button class="btn btn-wake" onclick="sendWol(${machine.id})">
+                            Wake
+                        </button>
+                        <button class="btn btn-delete" onclick="deleteMachine(${machine.id}, '${escapeHtml(machine.alias)}')">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Send WOL packet
+        async function sendWol(id) {
+            const card = document.querySelector(`.machine-card[data-id="${id}"]`);
+            const wakeBtn = card.querySelector('.btn-wake');
+
+            // Show loading state
+            wakeBtn.classList.add('btn-loading');
+            wakeBtn.innerHTML = '<span class="loading"></span>';
+
+            try {
+                const response = await fetch(`${API_BASE}/wol/${id}`, {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    showToast(data.message, 'success');
+                } else {
+                    showToast(data.message || 'Failed to send WOL packet', 'error');
+                }
+            } catch (error) {
+                showToast('Network error. Please try again.', 'error');
+            } finally {
+                wakeBtn.classList.remove('btn-loading');
+                wakeBtn.textContent = 'Wake';
+            }
+        }
+
+        // Delete machine
+        async function deleteMachine(id, alias) {
+            if (!confirm(`Delete "${alias}"?`)) return;
+
+            const card = document.querySelector(`.machine-card[data-id="${id}"]`);
+            card.style.opacity = '0.5';
+            card.style.pointerEvents = 'none';
+
+            try {
+                const response = await fetch(`${API_BASE}/machines/${id}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    showToast(data.message, 'success');
+                    await loadMachines();
+                } else {
+                    showToast(data.message || 'Failed to delete machine', 'error');
+                    card.style.opacity = '1';
+                    card.style.pointerEvents = 'auto';
+                }
+            } catch (error) {
+                showToast('Network error. Please try again.', 'error');
+                card.style.opacity = '1';
+                card.style.pointerEvents = 'auto';
+            }
+        }
+
+        // Show toast notification
+        function showToast(message, type = 'success') {
+            toast.textContent = message;
+            toast.className = `toast toast-${type} show`;
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Initial load
+        loadMachines();
+    </script>
+</body>
+</html>

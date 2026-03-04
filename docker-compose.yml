@@ -1,0 +1,22 @@
+services:
+  wol:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: wol-app:latest
+    container_name: wol-homelab
+    # Host networking is required for WOL broadcast packets
+    network_mode: host
+    # Persist database
+    volumes:
+      - wol-data:/data
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    # Port mapping is not used with host mode, but documented for reference
+    # ports:
+    #   - "5001:5001"
+
+volumes:
+  wol-data:
+    driver: local
