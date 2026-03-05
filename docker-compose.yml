@@ -3,7 +3,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: wol-app:latest
     container_name: wol-homelab
     # Host networking is required for WOL broadcast packets
     network_mode: host
