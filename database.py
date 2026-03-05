@@ -9,8 +9,8 @@ from typing import List, Dict, Optional
 import os
 
 
-# Database file path
-DB_PATH = os.path.join(os.path.dirname(__file__), 'wol.db')
+# Database file path - use /data directory for persistent storage with proper permissions
+DB_PATH = '/data/wol.db'
 
 
 def get_db_connection():
