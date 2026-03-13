@@ -8,14 +8,10 @@ services:
     network_mode: host
     # Persist database
     volumes:
-      - wol-data:/data
+      - ./data:/data
     environment:
       - PYTHONUNBUFFERED=1
-    restart: unless-stopped
+    restart: always
     # Port mapping is not used with host mode, but documented for reference
     # ports:
     #   - "5001:5001"
-
-volumes:
-  wol-data:
-    driver: local
